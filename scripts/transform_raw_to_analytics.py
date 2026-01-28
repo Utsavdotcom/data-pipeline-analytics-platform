@@ -1,4 +1,5 @@
-from datetime import datetime
+from datetime import datetime, timezone
+import sys
 
 from app.db import get_db_connection
 
@@ -32,7 +33,7 @@ def transform_raw_events():
                 source = payload.get("source")
                 value = payload.get("value")
 
-                transformed_at = datetime.utcnow()
+                transformed_at = datetime.now(timezone.utc)
 
                 # Upsert into analytics table
                 cur.execute(
@@ -69,4 +70,13 @@ def transform_raw_events():
 
 
 if __name__ == "__main__":
-    transform_raw_events()
+    print(f"[{datetime.now(timezone.utc).isoformat()}] Transform job started")
+
+    try:
+        transform_raw_events()
+    except Exception as e:
+        print(f"[ERROR] Transform job failed: {e}", file=sys.stderr)
+        raise
+    finally:
+        print(f"[{datetime.now(timezone.utc).isoformat()}] Transform job finished")
+
